@@ -13,7 +13,7 @@ Two things that grew together:
 
 **1. A PPM governance model** ([`ppm-build/`](ppm-build/)) — a stage-gate lifecycle with a driven
 approval matrix, snapshot-based change control on project financials, and an M0 qualification gate
-on demands that converts an approved demand into a project. Roughly 6,000 lines of business rules,
+on demands that converts an approved demand into a project. Roughly 3,000 lines of business rules,
 client scripts, script includes and the deployment tooling that installs them idempotently.
 
 **2. A ServiceNow MCP server** ([`server.js`](server.js)) — the tool that built it. Exposes the
@@ -31,15 +31,14 @@ script), with a read-only mode, response truncation and a `--doctor` connection 
 | **M0 demand intake** | 20 fields and 5 business rules on `dmn_demand`; on full approval the demand converts to a project |
 | **Approver matrix** | `u_approver_matrix`, keyed on project type + portfolio + phase, driving approver generation across all three record types |
 | **Approval rollup** | One rule on `sysapproval_approver` covering gates, change requests and demands |
-| **Zero labor cost from timecards** | A separate feature, designed across eight candidate approaches and measured head to head before one was chosen |
 
 Everything is captured in a single update set, so the whole build is portable to another instance.
 
 ## The engineering log
 
-**[`ppm-build/README.md`](ppm-build/README.md) is the substance of this repository** — around 700
-lines covering the run order, every verification result, the options considered and rejected with
-the measurements behind each call, and the gotchas that cost real time.
+**[`ppm-build/README.md`](ppm-build/README.md) is the substance of this repository** — the run
+order, every verification result, and the gotchas that cost real time. It records what did not work
+alongside what did.
 
 A few worth surfacing, because they are the kind of thing you only learn by hitting them:
 
@@ -57,10 +56,10 @@ A few worth surfacing, because they are the kind of thing you only learn by hitt
 
 ## Verification
 
-The build is verified by scripts in the repository, not by inspection — `12_verify.js` covers the
-gate and change-request lifecycle, `37/38_m0_verify.js` the demand process, and `59_edge_cases_test.js`
-the edge cases. Results, including the checks that did *not* pass and why, are recorded in the
-engineering log rather than summarised away.
+The build is verified by scripts in the repository, not by inspection — `11_verify.js` covers the
+gate and change-request lifecycle (21 of 22 checks), `12_verify_ajax.js` the client-callable path,
+and `13_verify_m0.js` the demand process end to end (20 checks, 0 failures). Results, including the
+check that did *not* pass and why, are recorded in the engineering log rather than summarised away.
 
 One example of that honesty being useful: the source specification states that a gate closes when all
 approvals are granted, but no rule in it actually sets the parent approval field when the
@@ -81,13 +80,15 @@ node server.js --doctor
 Deploy the build:
 
 ```bash
-node server.js --run ppm-build/01_fields.js   # prerequisite fields
-node ppm-build/deploy.js                      # business rules + client scripts
-node ppm-build/deploy_si.js                   # script includes
-node server.js --run ppm-build/06_form_layout.js
-node server.js --run ppm-build/08_seed.js     # synthetic test data
-node server.js --run ppm-build/12_verify.js   # verification
+node server.js --run ppm-build/01_fields.js       # prerequisite fields
+node ppm-build/deploy.js                          # business rules + client scripts
+node ppm-build/deploy_si.js                       # script includes
+node server.js --run ppm-build/03_form_layout.js  # form sections
+node server.js --run ppm-build/10_seed.js         # synthetic test data
+node server.js --run ppm-build/11_verify.js       # verification
 ```
+
+The full 13-step run order is in [`ppm-build/README.md`](ppm-build/README.md).
 
 Both deploy scripts are idempotent — re-running them updates in place rather than duplicating.
 
@@ -109,7 +110,7 @@ ppm-build/
   deploy.js            idempotent business rule + client script deployment
   deploy_si.js         idempotent script include deployment
   fetch_si.js          pull an out-of-box script include down for reference
-  00–60_*.js           the numbered build, diagnostic and verification scripts
+  01–13_*.js           the build and verification scripts, in run order
 docs/mcp-server.md     MCP server setup, tools and configuration
 ```
 
