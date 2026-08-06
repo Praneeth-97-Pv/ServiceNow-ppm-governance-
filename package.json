@@ -1,0 +1,15 @@
+{
+  "name": "servicenow-ppm-governance",
+  "version": "1.0.0",
+  "description": "Stage-gate, change-request and demand-intake governance built on ServiceNow SPM, with an MCP server for driving the instance",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "server.js",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "doctor": "node server.js --doctor",
+    "deploy": "node ppm-build/deploy.js",
+    "deploy:si": "node ppm-build/deploy_si.js",
+    "verify": "node server.js --run ppm-build/12_verify.js"
+  }
+}

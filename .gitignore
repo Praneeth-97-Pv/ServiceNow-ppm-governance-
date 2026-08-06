@@ -1,0 +1,9 @@
+# Credentials — never commit
+.env
+
+node_modules/
+.DS_Store
+
+# Out-of-box ServiceNow source pulled down for reference with fetch_si.js.
+# This is the vendor's code, not ours; keep it local.
+ppm-build/oob/
